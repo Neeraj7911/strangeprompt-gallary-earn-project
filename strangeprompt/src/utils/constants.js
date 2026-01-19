@@ -9,10 +9,10 @@ export const CATEGORIES = [
 ]
 
 export const DEFAULT_REDIRECTS = {
-  upload: 'https://affiliate.example.com/go/upload-ad?ref=strangeprompt',
-  copy: 'https://affiliate.example.com/go/copy-ad?ref=strangeprompt',
-  like: 'https://affiliate.example.com/go/like-ad?ref=strangeprompt',
-  profile: 'https://affiliate.example.com/go/profile-ad?ref=strangeprompt',
+  upload: 'https://www.effectivegatecpm.com/tbzrumcs?key=829f796e23adbdc1c3551c0cb82e234b',
+  copy: 'https://www.effectivegatecpm.com/tbzrumcs?key=829f796e23adbdc1c3551c0cb82e234b',
+  like: 'https://www.effectivegatecpm.com/tbzrumcs?key=829f796e23adbdc1c3551c0cb82e234b',
+  profile: 'https://www.effectivegatecpm.com/tbzrumcs?key=829f796e23adbdc1c3551c0cb82e234b',
 }
 
 export const MAX_PROMPT_LENGTH = 500

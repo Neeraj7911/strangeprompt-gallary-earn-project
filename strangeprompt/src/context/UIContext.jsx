@@ -49,43 +49,14 @@ export function UIProvider({ children }) {
 
   const triggerAdRedirect = useCallback(
     ({ actionLabel, onComplete, redirectUrl = DEFAULT_AD_URL, duration = 5000, postId = null }) => {
-      // Global bypass after 3 completed redirects (persisted)
-      try {
-        const key = 'sp_ad_redirects'
-        const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null
-        const count = raw ? parseInt(raw, 10) || 0 : 0
-        if (count >= 3) {
-          if (typeof onComplete === 'function') onComplete()
-          return
-        }
-      } catch (err) {
-        // ignore storage errors and proceed to show redirect
-      }
-
-      // Per-post allowance: fresh page loads allow up to 3 redirects per post; after client-side
-      // navigation between posts, allow only 1 ad for new posts in this session.
-      try {
-        if (postId && typeof window !== 'undefined') {
-          const memory = window.__sp_postCounts || {}
-          const current = memory[postId] || 0
-          const allowed = window.__sp_clientNavigated ? 1 : 3
-          if (current >= allowed) {
-            if (typeof onComplete === 'function') onComplete()
-            return
-          }
-        }
-      } catch (err) {
-        // ignore
-      }
-
+      // Always open the ad URL synchronously in the click handler to avoid popup blockers.
       try {
         if (typeof window !== 'undefined' && redirectUrl) {
           try {
             window.open(redirectUrl, '_blank', 'noopener,noreferrer')
-            // mark that we already opened the ad window to avoid opening again in the modal
             window.__sp_adOpened = true
           } catch (e) {
-            // ignore popup open errors and let modal attempt to open later
+            // ignore popup open errors; modal will still show
           }
         }
       } catch (e) {

@@ -137,7 +137,7 @@ export async function saveImageMetadata({
   return { id: imageDoc.id, ...payload }
 }
 
-export function fetchPopularImages({ category, searchTerm, pageSize = 20, lastVisible }) {
+export async function fetchPopularImages({ category, searchTerm, pageSize = 20, lastVisible }) {
   const conditions = []
   conditions.push(where('status', '==', 'approved'))
   if (category && category !== 'Explore') {
@@ -153,7 +153,39 @@ export function fetchPopularImages({ category, searchTerm, pageSize = 20, lastVi
     conditions.push(startAfter(lastVisible))
   }
   const q = query(imagesCollection, ...conditions)
-  return getDocs(q)
+  try {
+    const primarySnap = await getDocs(q)
+    return primarySnap
+  } catch (err) {
+    // If Firestore requires a composite index or the query fails for any reason,
+    // fall back to a best-effort client-side query to avoid hard runtime errors.
+    // Log the original error so developers can create the recommended index.
+    // eslint-disable-next-line no-console
+    console.warn('fetchPopularImages primary query failed, falling back to client filter:', err)
+
+    try {
+      const fallbackLimit = Math.max(pageSize * 6, 40)
+      const fallbackQuery = query(imagesCollection, orderBy('likes', 'desc'), limit(fallbackLimit))
+      const snapshot = await getDocs(fallbackQuery)
+      let items = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+      // Apply server-side filters client-side
+      items = items.filter((d) => d.status === 'approved')
+      if (category && category !== 'Explore') items = items.filter((d) => d.category === category)
+      if (searchTerm) items = items.filter((d) => (d.searchKeywords || []).includes(searchTerm.toLowerCase()))
+      items = items.slice(0, pageSize)
+
+      // Return a fake snapshot compatible with callers expecting .docs with .id and .data()
+      const fakeDocs = items.map((it) => ({ id: it.id, data: () => {
+        const copy = { ...it }
+        delete copy.id
+        return copy
+      } }))
+      return { docs: fakeDocs }
+    } catch (fallbackErr) {
+      console.error('fetchPopularImages fallback failed', fallbackErr)
+      return { docs: [] }
+    }
+  }
 }
 
 export function listenToRecentUploads(callback, take = 12, onError) {
@@ -226,19 +258,27 @@ export async function incrementCopy(imageId) {
   const snapshot = await getDoc(imageRef)
   if (!snapshot.exists()) return
   const { creatorId } = snapshot.data()
-  await updateDoc(imageRef, {
-    copies: increment(1),
-    updatedAt: serverTimestamp(),
-  })
+  try {
+    await updateDoc(imageRef, {
+      copies: increment(1),
+      updatedAt: serverTimestamp(),
+    })
+  } catch (err) {
+    console.warn('incrementCopy: updateDoc failed', err)
+  }
   if (creatorId) {
-    await setDoc(
-      doc(usersCollection, creatorId),
-      {
-        totalCopies: increment(1),
-        earningPoints: increment(5),
-      },
-      { merge: true },
-    )
+    try {
+      await setDoc(
+        doc(usersCollection, creatorId),
+        {
+          totalCopies: increment(1),
+          earningPoints: increment(5),
+        },
+        { merge: true },
+      )
+    } catch (err) {
+      console.warn('incrementCopy: crediting creator failed', err)
+    }
   }
 }
 
@@ -247,16 +287,24 @@ export async function incrementShare(imageId) {
   const snapshot = await getDoc(imageRef)
   if (!snapshot.exists()) return
   const { creatorId } = snapshot.data()
-  await updateDoc(imageRef, { shares: increment(1), updatedAt: serverTimestamp() })
+  try {
+    await updateDoc(imageRef, { shares: increment(1), updatedAt: serverTimestamp() })
+  } catch (err) {
+    console.warn('incrementShare: updateDoc failed', err)
+  }
   if (creatorId) {
-    await setDoc(
-      doc(usersCollection, creatorId),
-      {
-        totalShares: increment(1),
-        earningPoints: increment(2),
-      },
-      { merge: true },
-    )
+    try {
+      await setDoc(
+        doc(usersCollection, creatorId),
+        {
+          totalShares: increment(1),
+          earningPoints: increment(2),
+        },
+        { merge: true },
+      )
+    } catch (err) {
+      console.warn('incrementShare: crediting creator failed', err)
+    }
   }
 }
 
@@ -265,16 +313,24 @@ export async function incrementView(imageId) {
   const snapshot = await getDoc(imageRef)
   if (!snapshot.exists()) return
   const { creatorId } = snapshot.data()
-  await updateDoc(imageRef, { views: increment(1), updatedAt: serverTimestamp() })
+  try {
+    await updateDoc(imageRef, { views: increment(1), updatedAt: serverTimestamp() })
+  } catch (err) {
+    console.warn('incrementView: updateDoc failed', err)
+  }
   if (creatorId) {
-    await setDoc(
-      doc(usersCollection, creatorId),
-      {
-        totalViews: increment(1),
-        earningPoints: increment(0.2),
-      },
-      { merge: true },
-    )
+    try {
+      await setDoc(
+        doc(usersCollection, creatorId),
+        {
+          totalViews: increment(1),
+          earningPoints: increment(0.2),
+        },
+        { merge: true },
+      )
+    } catch (err) {
+      console.warn('incrementView: crediting creator failed', err)
+    }
   }
 }
 

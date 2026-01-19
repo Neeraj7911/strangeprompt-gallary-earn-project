@@ -63,7 +63,6 @@ export default function ImageDetailModal({
             />
             <span aria-hidden="true" className="watermark-overlay" data-watermark="STRANGE PROMPT">
               STRANGE PROMPT
-          }
             </span>
           </figure>
 
