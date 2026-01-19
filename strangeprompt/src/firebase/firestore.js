@@ -239,7 +239,7 @@ export async function toggleLike({ imageId, userId }) {
         likes: increment(-1),
         updatedAt: serverTimestamp(),
       })
-      transaction.set(ownerRef, { totalLikes: increment(-1) }, { merge: true })
+      // Avoid touching the owner's user doc from the client (security rules restrict this).
       return false
     }
 
@@ -248,7 +248,7 @@ export async function toggleLike({ imageId, userId }) {
       likes: increment(1),
       updatedAt: serverTimestamp(),
     })
-    transaction.set(ownerRef, { totalLikes: increment(1) }, { merge: true })
+    // Avoid touching the owner's user doc from the client (server should process earnings/aggregates).
     return true
   })
 }
@@ -611,7 +611,7 @@ export async function bumpEarningsForAction(userId, amount = 0.05) {
   )
 }
 
-export async function recordRedirectForImage(imageId, amount = 0.05) {
+export async function recordRedirectForImage(imageId, viewerId = null, amount = 0.05) {
   if (!imageId) return null
   try {
     const snap = await getDoc(doc(imagesCollection, imageId))
@@ -622,7 +622,8 @@ export async function recordRedirectForImage(imageId, amount = 0.05) {
     const redirectsCollection = collection(firestore, 'users', creatorId, 'redirects')
     await addDoc(redirectsCollection, {
       imageId,
-      amount,
+      viewerId: viewerId || null,
+      amount: Number(amount) || 0,
       processed: false,
       createdAt: serverTimestamp(),
     })
@@ -630,6 +631,29 @@ export async function recordRedirectForImage(imageId, amount = 0.05) {
   } catch (err) {
     console.error('recordRedirectForImage', err)
     return null
+  }
+}
+
+export async function fetchCreatorEarningsSummary(creatorId, limitTo = 1000) {
+  if (!creatorId) return { totalRedirects: 0, totalAmount: 0, unprocessed: 0 }
+  try {
+    const redirectsCollection = collection(firestore, 'users', creatorId, 'redirects')
+    const q = query(redirectsCollection, orderBy('createdAt', 'desc'), limit(limitTo))
+    const snapshot = await getDocs(q)
+    let total = 0
+    let count = 0
+    let unprocessed = 0
+    snapshot.docs.forEach((docSnap) => {
+      const d = docSnap.data() || {}
+      const a = Number(d.amount) || 0
+      total += a
+      count += 1
+      if (!d.processed) unprocessed += 1
+    })
+    return { totalRedirects: count, totalAmount: total, unprocessed }
+  } catch (err) {
+    console.error('fetchCreatorEarningsSummary', err)
+    return { totalRedirects: 0, totalAmount: 0, unprocessed: 0 }
   }
 }
 

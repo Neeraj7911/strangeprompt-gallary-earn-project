@@ -17,9 +17,9 @@ export function formatDate(timestamp) {
 
 export function estimateEarnings({ views = 0, copies = 0, shares = 0 }) {
   // Lowered view rate to reduce estimated earnings from ad views
-  const viewRate = 0.0003
-  const copyRate = 0.0003
-  const shareRate = 0.0001
+  const viewRate = 0.15
+  const copyRate = 0.15
+  const shareRate = 0.15
   const total = views * viewRate + copies * copyRate + shares * shareRate
   return Number(total.toFixed(2))
 }

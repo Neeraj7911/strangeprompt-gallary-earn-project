@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Topbar from './components/Topbar'
 import Footer from './components/Footer'
 import GlobalModals from './components/GlobalModals'
+import AdsLoader from './components/AdsLoader'
 import TermsPage from './pages/Terms'
 import PrivacyPage from './pages/Privacy'
 import CookiesPage from './pages/Cookies'
@@ -121,6 +122,7 @@ function App() {
               />
             </div>
           </div>
+          <AdsLoader />
           <GlobalModals />
         </BrowserRouter>
       </UIProvider>

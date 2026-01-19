@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { recordRedirectForImage } from '../firebase/firestore'
+import { useAuth } from './AuthContext'
 
 const DEFAULT_AD_URL = 'https://affiliate.example.com/redirect?s=strangeprompt'
 
@@ -79,41 +80,51 @@ export function UIProvider({ children }) {
     setAdRedirect((state) => ({ ...state, isOpen: false, onComplete: null }))
   }, [])
 
+  const { isAuthenticated, user } = useAuth()
+
   const completeAdRedirect = useCallback(() => {
+    let capturedOnComplete = null
+    let capturedPostId = null
+
     setAdRedirect((state) => {
-      try {
-        const key = 'sp_ad_redirects'
-        if (typeof window !== 'undefined') {
-          const raw = window.localStorage.getItem(key)
-          const count = raw ? parseInt(raw, 10) || 0 : 0
-          window.localStorage.setItem(key, String(count + 1))
-        }
+      capturedOnComplete = state.onComplete
+      capturedPostId = state.postId || null
+      return { ...state, isOpen: false, onComplete: null, postId: null }
+    })
 
-        // increment in-memory per-post count so a full reload resets counts
-        const postId = state.postId || null
-        if (postId && typeof window !== 'undefined') {
-          window.__sp_postCounts = window.__sp_postCounts || {}
-          window.__sp_postCounts[postId] = (window.__sp_postCounts[postId] || 0) + 1
-        }
-      } catch (err) {
-        // ignore storage errors
+    try {
+      const key = 'sp_ad_redirects'
+      if (typeof window !== 'undefined') {
+        const raw = window.localStorage.getItem(key)
+        const count = raw ? parseInt(raw, 10) || 0 : 0
+        window.localStorage.setItem(key, String(count + 1))
       }
 
-      if (typeof state.onComplete === 'function') {
-        state.onComplete()
+      if (capturedPostId && typeof window !== 'undefined') {
+        window.__sp_postCounts = window.__sp_postCounts || {}
+        window.__sp_postCounts[capturedPostId] = (window.__sp_postCounts[capturedPostId] || 0) + 1
       }
+    } catch (err) {
+      // ignore storage errors
+    }
+
+    if (typeof capturedOnComplete === 'function') {
       try {
-        // Async: credit the creator for this post redirect
-        const postId = state.postId || null
-        if (postId) {
-          recordRedirectForImage(postId).catch((e) => console.error('credit redirect failed', e))
-        }
+        capturedOnComplete()
+      } catch (e) {
+        console.error('onComplete callback failed', e)
+      }
+    }
+
+    if (capturedPostId) {
+      try {
+        // pass viewer ID when available so earnings can be audited
+        recordRedirectForImage(capturedPostId, user?.uid).catch((e) => console.error('credit redirect failed', e))
       } catch (e) {
         console.error('recordRedirectForImage error', e)
       }
-      return { ...state, isOpen: false, onComplete: null, postId: null }
-    })
-  }, [])
+    }
+  }, [isAuthenticated])
 
   const value = useMemo(
     () => ({
