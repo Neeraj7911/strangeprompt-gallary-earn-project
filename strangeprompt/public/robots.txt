@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://strangeprompt.com/sitemap.xml
+Host: strangeprompt.com

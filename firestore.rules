@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerId) {
+      return signedIn() && request.auth.uid == ownerId;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    match /images/{imageId} {
+      // During development allow public read of images to support live feed
+      // In production, consider restricting to approved images and owners/admins
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.creatorId == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      allow update: if (isOwner(resource.data.creatorId)
+          && request.resource.data.status == resource.data.status)
+        || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    match /images/{imageId}/likes/{likeId} {
+      allow read: if true;
+      allow write: if signedIn() && request.auth.uid == likeId;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/notifications/{docId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if signedIn();
+      allow update, delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Redirect events: allow any signed-in client to create a redirect event
+    // so a trusted backend can process payouts. Clients cannot read or modify events.
+    match /users/{userId}/redirects/{redirectId} {
+      allow create: if signedIn();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId}/followers/{followerId} {
+      allow read: if true;
+      allow write: if signedIn() && request.auth.uid == followerId;
+    }
+
+    // Reports: anyone signed in can create a report; only admins may read/modify them
+    match /reports/{reportId} {
+      allow create: if signedIn();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /usernames/{handle} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

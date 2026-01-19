@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Populate this file with user-generated content URLs (profiles, posts, collections).
+       You can generate it during build by fetching slugs from Firestore and writing
+       <url> entries with <loc>, <lastmod>, and <changefreq>. Search engines will
+       discover this sitemap via sitemap.xml. -->
+</urlset>

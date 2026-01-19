@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Language" content="en" />
+    <meta name="robots" content="index,follow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="canonical" href="https://strangeprompt.com/" />
+    <link rel="alternate" href="https://strangeprompt.com/" hreflang="en" />
+    <meta
+      name="description"
+      content="StrangePrompt is the viral AI prompt studio—copy high-performing prompts for Instagram, TikTok, product shoots, anime looks, and more."
+    />
+    <meta
+      name="keywords"
+      content="AI prompts, viral prompts, TikTok prompts, Instagram reels prompts, AI marketing, product photoshoot prompts, anime prompts, StrangePrompt"
+    />
+    <meta property="og:title" content="StrangePrompt – Community AI Prompt Gallery" />
+    <meta
+      property="og:description"
+      content="Copy ready-to-post AI prompts for social virality. Launch your next product shot, model concept, anime scene, and more from StrangePrompt."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://strangeprompt.com/" />
+    <meta property="og:image" content="https://strangeprompt.com/social-preview.png" />
+    <meta property="og:site_name" content="StrangePrompt" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="StrangePrompt – Viral AI Prompt Library" />
+    <meta
+      name="twitter:description"
+      content="Grab proven prompts, paste to your favorite AI tool, and publish viral visuals on Instagram or TikTok within minutes."
+    />
+    <meta name="twitter:image" content="https://strangeprompt.com/social-preview.png" />
+    <meta name="twitter:creator" content="@StrangePrompt" />
+    <meta name="theme-color" content="#0f0a12" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CreativeWorkSeries",
+        "name": "StrangePrompt Viral Prompt Library",
+        "description": "Browse curated AI prompts for product photography, fashion models, anime art, and social media storytelling. Copy prompts and deploy across Instagram, TikTok, and more.",
+        "inLanguage": "en",
+        "url": "https://strangeprompt.com/",
+        "potentialAction": {
+          "@type": "CommunicateAction",
+          "target": "https://strangeprompt.com/gallery",
+          "description": "Copy the prompt and share it on social media to engage your audience."
+        }
+      }
+    </script>
+    <script>
+      ;(function () {
+        const STORAGE_KEY = 'strangeprompt-theme'
+        const root = document.documentElement
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+        try {
+          const stored = window.localStorage.getItem(STORAGE_KEY)
+          const isDark = stored ? stored === 'dark' : prefersDark
+          root.classList.toggle('dark', isDark)
+          root.style.colorScheme = isDark ? 'dark' : 'light'
+        } catch (error) {
+          root.classList.toggle('dark', prefersDark)
+          root.style.colorScheme = prefersDark ? 'dark' : 'light'
+        }
+      })()
+    </script>
+    <title>StrangePrompt | Viral AI Prompt Library</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
